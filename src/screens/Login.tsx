@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
-import { StatusBar, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useState } from 'react';
+import { Text, View, Image } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
+import { appImages, inputUnderlineColors } from '../lib/constants';
+import appStyles from '../styles/appStyle';
+import loginStyles from '../styles/loginStyle';
+import LoadingScreen from '../components/LoadingScreen';
+import { checkLoginStatus, login, updateAxiosInstance } from '../lib/api';
+import { Formik } from 'formik';
+import FormErrorBox from '../components/FormErrorBox';
+import AppStatusBar from '../components/AppStatusBar';
 
 interface IProps {
   navigation: any;
@@ -9,7 +16,11 @@ interface IProps {
 
 const Login = (props: IProps) => {
   const [isPasswordSecured, setIsPasswordSecured] = useState(true);
-  const [IsPasswordSecuredIconName, setIsPasswordSecuredIconName] = useState<'lock-open-outline' | 'lock-outline'>('lock-outline');
+  const [
+    IsPasswordSecuredIconName,
+    setIsPasswordSecuredIconName
+  ] = useState<'lock-open-outline' | 'lock-outline'>('lock-outline');
+  const [isLoading, setIsLoading] = useState(true);
 
   const { navigation } = props;
 
@@ -21,44 +32,98 @@ const Login = (props: IProps) => {
     setIsPasswordSecured(!isPasswordSecured);
   }
 
-  return (
-    <View style={{flex: 1}}>
-      <StatusBar backgroundColor='#2b90ff' barStyle='light-content'/>
-      <LinearGradient colors={['#2b90ff', '#5ca6f7', '#85bfff']} style={{flex: 1, alignItems: 'center'}}>    
-        <View style={{flex: 1, justifyContent: 'center', backgroundColor: 'transparent', width: '80%'}}>
-          <Text style={{color: 'white', textAlign: 'center', top: -20, fontSize: 70, textShadowRadius: 20, textShadowOffset: { width: 0, height: 1}}}>
-            GETBUS
-          </Text>
-          <TextInput
-            label='Email'
-            underlineColor='rgba(255, 255, 255, 0.5)'
-            right={<TextInput.Icon name='email-outline' />}
-            style={{marginBottom: 40}}
-          />
-          <TextInput
-            label='Пароль'
-            secureTextEntry={isPasswordSecured}
-            underlineColor='rgba(255, 255, 255, 0.5)'
-            right={<TextInput.Icon name={IsPasswordSecuredIconName} onPress={changeIsPasswordSecured} />}
-            style={{marginBottom: 40}}
-          />
-          <Button style={{justifyContent: 'center', backgroundColor: 'white', height: 60, shadowRadius: 20, shadowOffset: { width: 0, height: 5}, elevation: 5}} uppercase={false}>
-            <Text style={{color: '#2b90ff', fontSize: 15, letterSpacing: 0.5}}>
-              Увійти
-            </Text>
-          </Button>
-          <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10}}>
-            <Text style={{color: 'rgba(255, 255, 255, 0.6)'}}>
-              Новий користувач?
-            </Text>
-            <Button mode='text' uppercase={false} compact={true} onPress={navigateRegister}>
-              <Text style={{ letterSpacing: 0.5}}>
-                Реєстрація
-              </Text>
-            </Button>
-          </View>
+  const loginToAccount = async (values: any, actions: any) => {
+    const { email, password } = values;
+    const response = await login(email, password);
+    navigation.navigate('Main');
+  }
+
+  useEffect(() => {
+    (async () => {
+      await updateAxiosInstance();
+      const loginStatus = await checkLoginStatus();
+      if (loginStatus) {
+        setIsLoading(false);
+        return;
+      }
+    })();
+  }, []);
+
+  return isLoading ? <LoadingScreen /> : (
+    <View style={appStyles.flexContainer}>
+      <AppStatusBar />
+      <View style={appStyles.screenContainer}>
+        <View style={{...appStyles.flexContainer, ...appStyles.centeredContainer}}>
+          <Formik
+            initialValues={{
+              email: '',
+              password: '',
+            }}
+            //validationSchema={loginSchema}
+            onSubmit={loginToAccount}
+          >
+            {(formik) => (
+              <View style={loginStyles.loginContainer}>
+                <View style={appStyles.appTitleContainer}>
+                  <Text style={appStyles.appTitle}>
+                    Getbus
+                  </Text>
+                  <Image 
+                    source={appImages.loginCircles}
+                    style={appStyles.appTitleImage}
+                  />
+                </View>
+                <TextInput
+                  label='Email'
+                  value={formik.values.email}
+                  onChangeText={formik.handleChange('email')}
+                  underlineColor={inputUnderlineColors.primary}
+                  right={<TextInput.Icon name='email-outline' />}
+                  style={loginStyles.formInput}
+                />
+                {((formik.touched.email && formik.errors.email) && (
+                  <FormErrorBox fieldError={formik.errors.email} />
+                ))}
+                <TextInput
+                  label='Пароль'
+                  value={formik.values.password}
+                  onChangeText={formik.handleChange('password')}
+                  secureTextEntry={isPasswordSecured}
+                  underlineColor={inputUnderlineColors.primary}
+                  right={
+                    <TextInput.Icon
+                      name={IsPasswordSecuredIconName}
+                      onPress={changeIsPasswordSecured}
+                    />}
+                  style={loginStyles.formInput}
+                />
+                {(formik.touched.password && formik.errors.password) && (
+                  <FormErrorBox fieldError={formik.errors.password} />
+                )}
+                <Button
+                  uppercase={false}
+                  style={appStyles.buttonPrimary}
+                  onPress={formik.handleSubmit}
+                >
+                  <Text style={appStyles.buttonPrimaryText}>
+                    Увійти
+                  </Text>
+                </Button>
+                <View style={loginStyles.registerQuestionContainer}>
+                  <Text style={loginStyles.registerQuestionText}>
+                    Новий користувач?
+                  </Text>
+                  <Button mode='text' uppercase={false} compact={true} onPress={navigateRegister}>
+                    <Text style={loginStyles.registerButtonText}>
+                      Реєстрація
+                    </Text>
+                  </Button>
+                </View>
+              </View>
+            )}
+          </Formik>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
