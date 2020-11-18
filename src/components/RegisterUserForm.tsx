@@ -1,25 +1,39 @@
-import React, { MutableRefObject, useRef, useState } from 'react';
+import React, { MutableRefObject, useEffect, useRef, useState } from 'react';
 import { Text, View, Image, Keyboard } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
+import RNPickerSelect from 'react-native-picker-select';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker, { Event } from '@react-native-community/datetimepicker';
-import { inputUnderlineColors } from '../lib/constants';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { inputUnderlineColors, workersDropdownData } from '../lib/constants';
 import appStyles from '../styles/appStyle';
 import registerStyles from '../styles/registerStyle';
 import { Formik } from 'formik';
 import { registerSchema } from '../lib/validationShemas';
 import FormErrorBox from './FormErrorBox';
+import { formatDate, subtracDateYears } from '../lib/functions';
+import { login, register, registerWorker } from '../lib/api';
+import LoadingScreen from './LoadingScreen';
+import selectPickerStyles from '../styles/selectPickerStyles';
+import Roles from '../lib/roles';
+import { IUser, IUserFormUpdate } from '../lib/entities';
 
 interface IProps {
-  onSubmit: () => void;
+  mode: 'user' | 'worker';
+  navigation?: any;
+  userInfo?: IUser;
+  registerHandler?: () => Promise<void>;
 }
 
 const RegisterUserForm = (props: IProps) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [birthDate, setBirthDate] = useState(new Date());
+  const [workerRole, setWorkerRole] = useState<Roles>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorText, setErrorText] = useState('');
 
-  const { onSubmit } = props;
+  const { mode, navigation, userInfo, registerHandler } = props;
 
   const onFocus = () => {
     Keyboard.dismiss();
@@ -27,18 +41,6 @@ const RegisterUserForm = (props: IProps) => {
   }
   
   const onBlur = () => setShowDatePicker(false);
-
-  const formatDate = (date: Date) => {
-    const day = date.getDate();
-    const month = date.getMonth();
-    const year = date.getFullYear();
-    return `${day < 10 ? `0${day}` : day }.${month < 10 ? `0${month}` : month }.${year}`;
-  }
-
-  const subtracDateYears = (date: Date, subtractNumber: number) => {
-    date.setFullYear(date.getFullYear() - subtractNumber, date.getMonth(), date.getDate());
-    return date;
-  }
 
   const handleDateTimePickerChange = (
     formikSetFieldFunc: (field: string, value: any, shouldValidate?: boolean | undefined) => void,
@@ -52,11 +54,86 @@ const RegisterUserForm = (props: IProps) => {
     if (event.type === 'set') {
       const formatedDate = formatDate(selectedDate);
       formikSetFieldFunc('birthDate', formatedDate);
+      selectedDate.setHours(0, 0, 0, 0);
       setBirthDate(selectedDate);
     }
   }
 
-  return (
+  const handleSelectPickerChange = (value: number) => {
+    if (!value) {
+      return;
+    }
+    setWorkerRole(value);
+  }
+
+  const registerUser = async (values: any, _actions: any) => {
+    const {
+      firstName,
+      lastName,
+      password,
+      email,
+      passportNo,
+      phoneNumber,
+    } = values;
+    setIsLoading(true);
+    let registerResponse: any;
+    if (mode === 'user') {
+      registerResponse = await register(
+        firstName,
+        lastName,
+        password,
+        birthDate,
+        email,
+        passportNo,
+        phoneNumber,
+      );
+    } else {
+      if (!workerRole) {
+        setIsLoading(false);
+        setErrorText('Виберіть роль працівника');
+        return;
+      }
+      registerResponse = await registerWorker(
+        firstName,
+        lastName,
+        password,
+        birthDate,
+        email,
+        passportNo,
+        phoneNumber,
+        workerRole,
+      );
+    }
+    setIsLoading(false);
+    if (registerResponse.error) {
+      setErrorText(registerResponse.error.message);
+      return;
+    }
+    if (registerHandler) {
+      await registerHandler();
+    }
+    if (mode === 'worker') {
+      return;
+    }
+    setIsLoading(true);
+    const loginResponse = await login(email, password);
+    setIsLoading(false);
+    if (loginResponse.error) {
+      navigation?.navigate('Login');
+      return;
+    }
+    navigation?.navigate('Main');
+  }
+
+  const onSubmit = async (values: any, actions: any) => {
+    values = {
+      ...values,
+      phoneNumber: `+380${values.phoneNumber}`,
+    }
+    await registerUser(values, actions);
+  }
+
+  return isLoading ? <LoadingScreen /> : (
     <SafeAreaView>
       <ScrollView contentContainerStyle={appStyles.centeredContainer}>
         <Formik
@@ -65,8 +142,9 @@ const RegisterUserForm = (props: IProps) => {
             lastName: '',
             password: '',
             confirmPassword: '',
-            email: '',
             birthDate: '',
+            email: '',
+            passportNo: '',
             phoneNumber: '',
           }}
           validationSchema={registerSchema}
@@ -83,7 +161,7 @@ const RegisterUserForm = (props: IProps) => {
                 style={registerStyles.formFirstInput}
               />
               {(formik.touched.firstName && formik.errors.firstName) && (
-                <FormErrorBox fieldError={formik.errors.firstName} />
+                <FormErrorBox errorText={formik.errors.firstName} />
               )}
               <TextInput
                 label='Призвіще'
@@ -94,7 +172,7 @@ const RegisterUserForm = (props: IProps) => {
                 style={registerStyles.formInput}
               />
               {(formik.touched.lastName && formik.errors.lastName) && (
-                <FormErrorBox fieldError={formik.errors.lastName} />
+                <FormErrorBox errorText={formik.errors.lastName} />
               )}
               <TextInput
                 label='Пароль'
@@ -105,7 +183,7 @@ const RegisterUserForm = (props: IProps) => {
                 style={registerStyles.formInput}
               />
               {(formik.touched.password && formik.errors.password) && (
-                <FormErrorBox fieldError={formik.errors.password} />
+                <FormErrorBox errorText={formik.errors.password} />
               )}
               <TextInput
                 label='Підтвердіть пароль'
@@ -116,7 +194,7 @@ const RegisterUserForm = (props: IProps) => {
                 style={registerStyles.formInput}
               />
               {(formik.touched.confirmPassword && formik.errors.confirmPassword) && (
-                <FormErrorBox fieldError={formik.errors.confirmPassword} />
+                <FormErrorBox errorText={formik.errors.confirmPassword} />
               )}
               <TextInput
                 label='Дата народження'
@@ -128,13 +206,13 @@ const RegisterUserForm = (props: IProps) => {
                 style={registerStyles.formInput}
               />
               {(formik.touched.birthDate && formik.errors.birthDate) && (
-                <FormErrorBox fieldError={`${formik.errors.birthDate}`} />
+                <FormErrorBox errorText={`${formik.errors.birthDate}`} />
               )}
               {showDatePicker && (
                 <DateTimePicker
                   value={birthDate}
                   mode='date'
-                  maximumDate={subtracDateYears(new Date(), 16)}
+                  maximumDate={subtracDateYears(new Date(), mode === 'user' ? 16 : 18)}
                   minimumDate={subtracDateYears(new Date(), 120)}
                   onChange={(event, selectedDate) => {
                     handleDateTimePickerChange(formik.setFieldValue, event, selectedDate)
@@ -150,7 +228,20 @@ const RegisterUserForm = (props: IProps) => {
                 style={registerStyles.formInput}
               />
               {(formik.touched.email && formik.errors.email) && (
-                <FormErrorBox fieldError={formik.errors.email} />
+                <FormErrorBox errorText={formik.errors.email} />
+              )}
+              <TextInput
+                label='Номер паспорту'
+                value={formik.values.passportNo}
+                onChangeText={formik.handleChange('passportNo')}
+                maxLength={9}
+                keyboardType='phone-pad'
+                underlineColor={inputUnderlineColors.primary}
+                right={<TextInput.Icon name='passport-biometric' />}
+                style={registerStyles.formInput}
+              />
+              {(formik.touched.passportNo && formik.errors.passportNo) && (
+                <FormErrorBox errorText={formik.errors.passportNo} />
               )}
               <View style={{
                 ...appStyles.flexContainer,
@@ -174,15 +265,30 @@ const RegisterUserForm = (props: IProps) => {
                 />
               </View>
               {(formik.touched.phoneNumber && formik.errors.phoneNumber) && (
-                <FormErrorBox fieldError={formik.errors.phoneNumber} />
+                <FormErrorBox errorText={formik.errors.phoneNumber} />
               )}
+              {mode === 'worker' && (
+                <View style={{alignItems: 'flex-end'}}>
+                  <RNPickerSelect
+                    onValueChange={handleSelectPickerChange}
+                    placeholder={{
+                      label: 'Вииберіть роль...',
+                      value: null,
+                    }}
+                    items={workersDropdownData}
+                    style={selectPickerStyles}
+                  />
+                  <MaterialCommunityIcons name='arrow-down-drop-circle-outline' color='#5ca6f7' size={30} style={{position: 'relative', top: -40, right: 10}} />
+                </View>
+              )}
+              <FormErrorBox errorText={errorText} />
               <Button
                 uppercase={false}
                 style={{...appStyles.buttonPrimary, ...registerStyles.registerButton}}
                 onPress={formik.handleSubmit}
               >
                 <Text style={appStyles.buttonPrimaryText}>
-                  Зареєструватися
+                  {mode === 'user' ? 'Зареєструватися' : 'Додати'}
                 </Text>
               </Button>
             </View>

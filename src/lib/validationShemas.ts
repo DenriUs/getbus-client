@@ -4,22 +4,22 @@ export const loginSchema = yup.object({
   email: yup
     .string()
     .email('Введіть правильний email')
-    .required('Введіть ваш email'),
+    .required('Введіть email'),
   password: yup
     .string()
-    .required('Введіть ваш пароль'),
+    .required('Введіть пароль'),
 });
 
 export const registerSchema = yup.object({
   firstName: yup
     .string()
-    .required('Введіть ваше ім\'я'),
+    .required('Введіть ім\'я'),
   lastName: yup
     .string()
-    .required('Введіть ваше прізвище'),
+    .required('Введіть прізвище'),
   password: yup
     .string()
-    .required('Введіть ваш пароль')
+    .required('Введіть пароль')
     .min(8, 'Пароль повинен містити мінімум 8 символів')
     .test(
       'is-password-valid',
@@ -28,17 +28,39 @@ export const registerSchema = yup.object({
     ),
   confirmPassword: yup
     .string()
-    .required('Підтвердіть свій пароль')
+    .required('Підтвердіть пароль')
     .oneOf([yup.ref('password')], 'Паролі повинні збігатися'),
   birthDate: yup
     .string()
     .required('Виберіть дату народження'),
   email: yup
     .string()
-    .required('Введіть ваш email')
+    .required('Введіть email')
     .email('Введіть правильний email'),
+  passportNo: yup
+    .string()
+    .required('Введіть номер паспорту')
+    .max(9),
   phoneNumber: yup
     .string()
-    .required('Введіть ваш номер телефону')
-    .min(9, 'Введіть ваш номер телефону'),
+    .required('Введіть номер телефону')
+    .min(9, 'Введіть номер телефону'),
+});
+
+export const busTypeSchema = yup.object({
+  name: yup
+    .string()
+    .required('Введіть назву типу автобуса'),
+});
+
+export const busSchema = yup.object({
+  name: yup
+    .string()
+    .required('Введіть назву автобуса'),
+  seatsAmount: yup
+    .number()
+    .required('Введіть к-ть місць в автобусі'),
+  number: yup
+    .number()
+    .required('Введіть номер автобуса'),
 });

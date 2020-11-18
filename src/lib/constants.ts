@@ -3,13 +3,14 @@ import { DefaultTheme } from 'react-native-paper';
 
 import ukraineFlag from '../../assets/ukraineFlag.png';
 import loginCircles from '../../assets/loginCircles.png';
+import Roles from './roles';
 
 const axiosTimeoutSeconds = 20;
 
 export const jwtAsyncStorageKeyName = 'jwt';
 
 export const mainAxiosRequestConfig: AxiosRequestConfig = {
-  baseURL: 'https://d9a32458313e.ngrok.io',
+  baseURL: 'https://c385d97a28c9.ngrok.io',
   timeout: axiosTimeoutSeconds * 1000,
 }
 
@@ -65,3 +66,21 @@ export const appImages = {
   ukraineFlag,
   loginCircles,
 }
+
+export const workersDropdownData = [
+  {
+    label: 'Водій',
+    value: Roles.BusDriver,
+  },
+  {
+    label: 'Диспетчер',
+    value: Roles.Dispatcher,
+  },
+  {
+    label: 'Працівник служби підтримки',
+    value: Roles.SupportWorker,
+  },
+]
+
+export type SelectPickerData = { label: string, value: any}[];
+

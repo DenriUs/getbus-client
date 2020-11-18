@@ -1,6 +1,6 @@
 import React, { MutableRefObject, useEffect, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
-import { Button, TouchableRipple } from 'react-native-paper';
+import { Button, Divider, TouchableRipple } from 'react-native-paper';
 import { MaterialCommunityIcons, Fontisto } from '@expo/vector-icons';
 import DateTimePicker, { Event } from '@react-native-community/datetimepicker';
 import CurvedBackground from '../components/CurvedBackground';
@@ -10,13 +10,20 @@ import AppBottomSheet from '../components/AppBottomSheet';
 import { yearMonths } from '../lib/constants';
 import Trip from '../components/Trip';
 import { ScrollView } from 'react-native-gesture-handler';
+import { subscribeToNavigationEvent, unsubscribeToNavigationEvent } from '../lib/functions';
 
-const SearchTickets = () => {
-  const [departureCity, setDepartureCity] = useState('Полтава');
-  const [arrivalCity, setArrivalCity] = useState('Київ');
+interface IProps {
+  navigation: any;
+}
+
+const SearchTickets = (props: IProps) => {
+  const [departureCity, setDepartureCity] = useState('Вибрати →');
+  const [arrivalCity, setArrivalCity] = useState('Вибрати →');
   const [departureDate, setDepartureDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const { navigation } = props;
+  
   const bottomSheetRef = useRef(null);
 
   const swapTripCities = () => {
@@ -41,12 +48,14 @@ const SearchTickets = () => {
 
   const clearSearchScreen = () => {
     changeBottomSheetSnapToValue(2);
-    alert('Done!');
   }
 
   useEffect(() => {
-    return () => clearSearchScreen();
-  }, []);
+    subscribeToNavigationEvent(navigation, 'blur', () => clearSearchScreen());
+    return () => {
+      unsubscribeToNavigationEvent(navigation, 'blur');
+    };
+  }, [])
 
   return (
     <View style={appStyles.flexContainer}>
@@ -65,6 +74,7 @@ const SearchTickets = () => {
                   <Text style={{fontSize: 20, color: 'rgba(0, 0, 0, 0.7)'}}>{departureCity}</Text>
                 </View>
               </TouchableRipple>
+              <Divider style={{width: '80%'}} />
               <TouchableRipple
                 onPress={() => console.log('Pressed2')}
                 rippleColor='rgba(0, 0, 0, 0.1)'
@@ -132,8 +142,9 @@ const SearchTickets = () => {
           </>
         } bottomSheetRef={bottomSheetRef} />
       </View>
-    </View>
+   </View>
   );
 }
+
 
 export default SearchTickets;

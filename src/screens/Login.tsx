@@ -9,6 +9,7 @@ import { checkLoginStatus, login, updateAxiosInstance } from '../lib/api';
 import { Formik } from 'formik';
 import FormErrorBox from '../components/FormErrorBox';
 import AppStatusBar from '../components/AppStatusBar';
+import { loginSchema } from '../lib/validationShemas';
 
 interface IProps {
   navigation: any;
@@ -20,7 +21,8 @@ const Login = (props: IProps) => {
     IsPasswordSecuredIconName,
     setIsPasswordSecuredIconName
   ] = useState<'lock-open-outline' | 'lock-outline'>('lock-outline');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorText, setErrorText] = useState('');
 
   const { navigation } = props;
 
@@ -35,17 +37,24 @@ const Login = (props: IProps) => {
   const loginToAccount = async (values: any, actions: any) => {
     const { email, password } = values;
     const response = await login(email, password);
+    if (response.error) {
+      setErrorText(response.error.message);
+      return;
+    }
+    actions.resetForm();
     navigation.navigate('Main');
   }
 
   useEffect(() => {
     (async () => {
+      setIsLoading(true);
       await updateAxiosInstance();
-      const loginStatus = await checkLoginStatus();
-      if (loginStatus) {
-        setIsLoading(false);
+      const response = await checkLoginStatus();
+      setIsLoading(false);
+      if (response.error) {
         return;
       }
+      navigation.navigate('Main');
     })();
   }, []);
 
@@ -59,7 +68,7 @@ const Login = (props: IProps) => {
               email: '',
               password: '',
             }}
-            //validationSchema={loginSchema}
+            validationSchema={loginSchema}
             onSubmit={loginToAccount}
           >
             {(formik) => (
@@ -82,7 +91,7 @@ const Login = (props: IProps) => {
                   style={loginStyles.formInput}
                 />
                 {((formik.touched.email && formik.errors.email) && (
-                  <FormErrorBox fieldError={formik.errors.email} />
+                  <FormErrorBox errorText={formik.errors.email} />
                 ))}
                 <TextInput
                   label='Пароль'
@@ -98,8 +107,9 @@ const Login = (props: IProps) => {
                   style={loginStyles.formInput}
                 />
                 {(formik.touched.password && formik.errors.password) && (
-                  <FormErrorBox fieldError={formik.errors.password} />
+                  <FormErrorBox errorText={formik.errors.password} />
                 )}
+                <FormErrorBox errorText={errorText} />
                 <Button
                   uppercase={false}
                   style={appStyles.buttonPrimary}

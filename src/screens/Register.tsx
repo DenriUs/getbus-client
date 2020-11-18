@@ -11,22 +11,16 @@ interface IProps {
 }
 
 const Register = (props: IProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-
   const { navigation } = props;
 
   const navigateBack = () => navigation.goBack();
 
-  const register = () => {
-    navigateBack();
-  }
-
-  return isLoading ? <LoadingSpinner /> : (
+  return (
     <View style={appStyles.flexContainer}>
       <AppStatusBar />
-      <AppHeader handleBackActionPress={navigateBack} />
+      <AppHeader title='Реєстрація' handleBackActionPress={navigateBack} />
       <View style={appStyles.screenContainer}>
-        <RegisterUserForm onSubmit={register} />
+        <RegisterUserForm mode='user' navigation={navigation} />
       </View>
     </View>
   );

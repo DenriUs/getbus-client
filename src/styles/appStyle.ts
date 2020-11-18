@@ -110,6 +110,9 @@ const appStyles = StyleSheet.create({
     paddingTop: 5,
     height: '100%',
   },
+  formInput: {
+    marginBottom: 60,
+  }
 });
 
 export default appStyles;
