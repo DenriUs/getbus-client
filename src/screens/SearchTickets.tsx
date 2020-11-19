@@ -1,5 +1,5 @@
 import React, { MutableRefObject, useEffect, useRef, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Modal, FlatList, RefreshControl } from 'react-native';
 import { Button, Divider, TouchableRipple } from 'react-native-paper';
 import { MaterialCommunityIcons, Fontisto } from '@expo/vector-icons';
 import DateTimePicker, { Event } from '@react-native-community/datetimepicker';
@@ -10,7 +10,12 @@ import AppBottomSheet from '../components/AppBottomSheet';
 import { yearMonths } from '../lib/constants';
 import Trip from '../components/Trip';
 import { ScrollView } from 'react-native-gesture-handler';
-import { subscribeToNavigationEvent, unsubscribeToNavigationEvent } from '../lib/functions';
+import { callRepeatAlert, subscribeToNavigationEvent, unsubscribeToNavigationEvent } from '../lib/functions';
+import AppHeader from '../components/AppHeader';
+import CitiesSelect from '../components/CitiesSelect';
+import { ITrip } from '../lib/entities';
+import { getBusByDriverId, orderTicket, searchTrips } from '../lib/api';
+import TripInfo from '../components/TripInfo';
 
 interface IProps {
   navigation: any;
@@ -21,6 +26,12 @@ const SearchTickets = (props: IProps) => {
   const [arrivalCity, setArrivalCity] = useState('Вибрати →');
   const [departureDate, setDepartureDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDepartureSelectModal, setShowDepartureSelectModal] = useState(false);
+  const [showArrivalSelectModal, setShowArrivalSelectModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showTripInfoModal, setShowTripInfoModal] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<ITrip>();
+  const [trips, setTrips] = useState<ITrip[]>([]);
 
   const { navigation } = props;
   
@@ -30,6 +41,30 @@ const SearchTickets = (props: IProps) => {
     setDepartureCity(arrivalCity);
     setArrivalCity(departureCity);
   }
+
+  const closeInfoModal = () => {
+    setSelectedTrip(undefined);
+    setShowTripInfoModal(false);
+  }
+
+  const loadTrips = async () => {
+    setIsRefreshing(true);
+    const tripsList = await searchTrips(departureCity, arrivalCity, departureDate);
+    console.log(tripsList);
+    if (!tripsList) {
+      callRepeatAlert(
+        () => loadTrips(),
+        'Сталася невідома помилка',
+      )
+      return;
+    }
+    setTrips(tripsList);
+    setIsRefreshing(false);
+  }
+
+  const closeDepartureSelectModal = () => setShowDepartureSelectModal(false);
+
+  const closeArrivalSelectModal = () => setShowArrivalSelectModal(false);
 
   const handleDateTimePickerChange = (event: Event, selectedDate: Date | undefined) => {
     setShowDatePicker(false);
@@ -50,6 +85,33 @@ const SearchTickets = (props: IProps) => {
     changeBottomSheetSnapToValue(2);
   }
 
+  const handleSearchPress = async () => {
+    changeBottomSheetSnapToValue(1);
+    loadTrips();
+  }
+
+  const handleTripPress = async (trip: ITrip) => {
+    setSelectedTrip(trip);
+    setShowTripInfoModal(true);
+  }
+
+  const renderTrips = trips.map((trip) => {
+    return (
+      <View key={trip.id}>
+        <Trip mode='searching' tripInfo={trip} onPress={() => handleTripPress(trip)} />
+      </View>
+    );
+  });
+
+  const handleOrder = async () => {
+    console.log(selectedTrip);
+    if (!selectedTrip) {
+      return;
+    }
+    await orderTicket(selectedTrip.seatPrice, selectedTrip.id);
+    setShowTripInfoModal(false);
+  }
+
   useEffect(() => {
     subscribeToNavigationEvent(navigation, 'blur', () => clearSearchScreen());
     return () => {
@@ -66,7 +128,7 @@ const SearchTickets = (props: IProps) => {
           <View style={{backgroundColor: 'rgba(255, 255, 255, 0.95)', flexDirection: 'row', justifyContent: 'space-between', width: '90%', borderRadius: 5}}>
             <View style={appStyles.fullWidth}>
               <TouchableRipple
-                onPress={() => console.log('Pressed')}
+                onPress={() => setShowDepartureSelectModal(true)}
                 rippleColor='rgba(0, 0, 0, 0.1)'
               >
                 <View style={{padding: 15}}>
@@ -76,7 +138,7 @@ const SearchTickets = (props: IProps) => {
               </TouchableRipple>
               <Divider style={{width: '80%'}} />
               <TouchableRipple
-                onPress={() => console.log('Pressed2')}
+                onPress={() => setShowArrivalSelectModal(true)}
                 rippleColor='rgba(0, 0, 0, 0.1)'
               >
                 <View style={{padding: 15}}>
@@ -112,7 +174,7 @@ const SearchTickets = (props: IProps) => {
           <View style={{backgroundColor: '#2b90ff', flexDirection: 'row', justifyContent: 'space-between', width: '90%', borderRadius: 5, marginTop: 10, elevation: 0, shadowRadius: 12, shadowOpacity: 0.4, shadowOffset: { width: 2, height: 2 }}}>
             <View style={appStyles.fullWidth}>
               <TouchableRipple
-                onPress={() => changeBottomSheetSnapToValue(1)}
+                onPress={handleSearchPress}
                 rippleColor='rgba(0, 0, 0, 0.1)'
               >
                 <View style={{padding: 15, alignItems: 'center'}}>
@@ -132,15 +194,43 @@ const SearchTickets = (props: IProps) => {
           )}
           <Fontisto name='bus-ticket' size={275} color={'#5ca6f7'} style={{marginTop: 50}} />
         </View>
+        <Modal animationType='slide' visible={showDepartureSelectModal} children={
+          <>
+            <AppHeader title='Місто відправки' handleBackActionPress={closeDepartureSelectModal} />
+            <CitiesSelect handleCityPress={(city: string) => {
+              setDepartureCity(city);
+              setShowDepartureSelectModal(false);
+            }} />
+          </>
+        }/>
+        <Modal animationType='slide' visible={showArrivalSelectModal} children={
+          <>
+            <AppHeader title='Місто прибуття' handleBackActionPress={closeArrivalSelectModal} />
+            <CitiesSelect handleCityPress={(city: string) => {
+              setArrivalCity(city);
+              setShowArrivalSelectModal(false);
+            }} />
+          </>
+        }/>
         <AppBottomSheet content={
           <>
             <Text style={{fontSize: 17}}>Доступні рейси:</Text>
             <View style={{width: '100%', height: 1, borderRadius: 4, backgroundColor: 'rgba(0, 0, 0, 0.2)',}}></View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Trip mode='searching' />
+            <ScrollView 
+              showsVerticalScrollIndicator={false} 
+              refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={loadTrips} />}>
+              {renderTrips}
             </ScrollView>
           </>
         } bottomSheetRef={bottomSheetRef} />
+        {selectedTrip && (
+          <Modal animationType='slide' visible={showTripInfoModal} children={
+            <>
+              <AppHeader title='Інформація' handleBackActionPress={closeInfoModal} />
+              <TripInfo tripInfo={selectedTrip} orderHandler={handleOrder} />
+            </>
+          }/>
+        )}
       </View>
    </View>
   );

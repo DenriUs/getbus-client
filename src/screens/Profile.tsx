@@ -75,11 +75,6 @@ const Profile = (props: IProps) => {
           </Card>
           <TouchableRipple
             rippleColor='rgba(0, 0, 0, 0.05)'
-            style={{borderColor: '#5ca6f7', borderWidth: 1, padding: 10, alignItems: 'center', borderRadius: 7, marginTop: 10}}>
-            <Text style={{fontSize: 17, color: '#5ca6f7'}}>Редагувати дані</Text>
-          </TouchableRipple>
-          <TouchableRipple
-            rippleColor='rgba(0, 0, 0, 0.05)'
             onPress={handleLogout}
             style={{borderColor: '#5ca6f7', borderWidth: 1, padding: 10, alignItems: 'center', borderRadius: 7, marginTop: 10}}>
             <Text style={{fontSize: 17, color: '#5ca6f7'}}>Вихід</Text>

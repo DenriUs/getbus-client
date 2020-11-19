@@ -41,6 +41,7 @@ const Login = (props: IProps) => {
       setErrorText(response.error.message);
       return;
     }
+    setErrorText('');
     actions.resetForm();
     navigation.navigate('Main');
   }

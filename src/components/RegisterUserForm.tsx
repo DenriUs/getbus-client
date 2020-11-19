@@ -17,7 +17,7 @@ import { login, register, registerWorker } from '../lib/api';
 import LoadingScreen from './LoadingScreen';
 import selectPickerStyles from '../styles/selectPickerStyles';
 import Roles from '../lib/roles';
-import { IUser, IUserFormUpdate } from '../lib/entities';
+import { IUser } from '../lib/entities';
 
 interface IProps {
   mode: 'user' | 'worker';
@@ -42,7 +42,7 @@ const RegisterUserForm = (props: IProps) => {
   
   const onBlur = () => setShowDatePicker(false);
 
-  const handleDateTimePickerChange = (
+  const handleDatePickerChange = (
     formikSetFieldFunc: (field: string, value: any, shouldValidate?: boolean | undefined) => void,
     event: Event,
     selectedDate: Date | undefined
@@ -215,7 +215,7 @@ const RegisterUserForm = (props: IProps) => {
                   maximumDate={subtracDateYears(new Date(), mode === 'user' ? 16 : 18)}
                   minimumDate={subtracDateYears(new Date(), 120)}
                   onChange={(event, selectedDate) => {
-                    handleDateTimePickerChange(formik.setFieldValue, event, selectedDate)
+                    handleDatePickerChange(formik.setFieldValue, event, selectedDate)
                   }}
                 />
               )}

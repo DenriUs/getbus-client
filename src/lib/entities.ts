@@ -1,5 +1,4 @@
-import Roles from "./roles";
-import { SupportRequestState } from "./supportRequestState";
+import Roles from './roles';
 import { TripState } from "./tripState";
 
 export interface IUser {
@@ -15,9 +14,6 @@ export interface IUser {
   pushNotificationToken?: string;
   trips?: ITrip[];
   tickets?: ITicket[];
-  workerSupportRequests?: ISupportRequest[];
-  userSupportRequests?: ISupportRequest[];
-  messages?: IMessage[];
 }
 
 export interface ITrip {
@@ -42,28 +38,6 @@ export interface ITicket {
   tripId: number;
   user?: IUser;
   trip?: ITrip;
-}
-
-export interface ISupportRequest {
-  id: number;
-  name: string;
-  creationDate: string;
-  supportRequestState: SupportRequestState;
-  userId: string;
-  supportWorkerId: string;
-  user?: IUser;
-  supportWorker?: IUser;
-  messages?: IMessage[];
-}
-
-export interface IMessage {
-  id: number;
-  text: string;
-  sentDateTime: Date;
-  userId: string;
-  supportRequestId: number;
-  user?: IUser;
-  supportRequest?: ISupportRequest;
 }
 
 export interface IBus {

@@ -20,8 +20,7 @@ const Worker = (props: IProps) => {
         <MaterialCommunityIcons 
           name={
             role === Roles.Dispatcher ? 'monitor-dashboard' :
-            role === Roles.BusDriver ? 'bus' :
-            role === Roles.SupportWorker ? 'headset' : 'help'
+            role === Roles.BusDriver ? 'bus' : 'help'
           }
           size={50}
           color='#5ca6f7' />

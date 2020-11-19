@@ -6,59 +6,61 @@ import appStyles from '../styles/appStyle';
 import { FAB } from 'react-native-paper';
 import Bus from '../components/Bus';
 import { callRepeatAlert } from '../lib/functions';
-import { IBus } from '../lib/entities';
-import { deleteBus, getBuses } from '../lib/api';
+import { IBus, ITrip } from '../lib/entities';
+import { deleteBus, deleteTrip, getBusByDriverId, getBuses, getTrips } from '../lib/api';
 import AppHeader from '../components/AppHeader';
 import BusForm from '../components/BusForm';
 import BusInfo from '../components/BusInfo';
+import Trip from '../components/Trip';
+import TripForm from '../components/TripForm';
+import TripInfo from '../components/TripInfo';
 
-const Buses = () => {
-  const [buses, setBuses] = useState<IBus[]>();
+const Trips = () => {
+  const [trips, setTrips] = useState<ITrip[]>();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showBusInfoModal, setShowBusInfoModal] = useState(false);
-  const [selectedBus, setSelectedBus] = useState<IBus>();
+  const [showTripInfoModal, setShowTripInfoModal] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<ITrip>();
 
   const closeCreateModal = () => setShowCreateModal(false);
   const closeInfoModal = () => {
-    setSelectedBus(undefined);
-    setShowBusInfoModal(false);
+    setSelectedTrip(undefined);
+    setShowTripInfoModal(false);
   }
 
-  const loadBuses = async () => {
+  const loadTrips = async () => {
     setIsRefreshing(true);
-    const busList = await getBuses();
-    if (!busList) {
-      callRepeatAlert(loadBuses, 'Не вдалося завантижити дані');
+    const tripsList = await getTrips();
+    if (!tripsList) {
+      callRepeatAlert(loadTrips, 'Не вдалося завантижити дані');
       setIsRefreshing(false);
       return;
     }
-    setBuses(busList);
+    setTrips(tripsList);
     setIsRefreshing(false);
   }
 
-  const handleBusPress = (bus: IBus) => {
-    setSelectedBus(bus);
-    setShowBusInfoModal(true);
+  const handleTripPress = async (trip: ITrip) => {
+    setSelectedTrip(trip);
+    setShowTripInfoModal(true);
   }
 
   const handleDelete = async () => {
-    if (selectedBus) {
-      const response = await deleteBus(selectedBus.id);
-      setShowBusInfoModal(false);
+    if (selectedTrip) {
+      const response = await deleteTrip(selectedTrip.id);
       if (response.error) {
         callRepeatAlert(
-          loadBuses,
+          loadTrips,
           'Не вдалося видалити дані, перевірте чи не належить цей тип до якогось автобуса'
         );
-        return;
       }
-      await loadBuses();
+      setShowTripInfoModal(false);
+      await loadTrips();
     }
   }
 
   useEffect(() => {
-    (async () => loadBuses())();
+    (async () => loadTrips())();
   }, []);
 
   return (  
@@ -69,32 +71,32 @@ const Buses = () => {
         <View style={{...appStyles.relativeFlexContainer, padding: 10}}>
           <FlatList
             keyExtractor={(item) => item.id.toString()}
-            data={buses}
+            data={trips}
             refreshing={isRefreshing} 
-            onRefresh={async () => await loadBuses()}
+            onRefresh={async () => await loadTrips()}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
-              <Bus onPress={() => handleBusPress(item)} busName={item.name} number={item.number} />
+              <Trip onPress={() => handleTripPress(item)} mode='worker' tripInfo={item} />
             )}
           />
           <Modal animationType='slide' visible={showCreateModal} children={
             <>
-              <AppHeader title='Додати автобус' handleBackActionPress={closeCreateModal} />
+              <AppHeader title='Додати рейс' handleBackActionPress={closeCreateModal} />
               <View style={appStyles.screenContainer}>
-                <BusForm
+                <TripForm
                   createHandler={async () => {
                     setShowCreateModal(false);
-                    await loadBuses()}
+                    await loadTrips()}
                   }
                 />
               </View>
             </>
           }/>
-          {selectedBus && (
-            <Modal animationType='slide' visible={showBusInfoModal} children={
+          {selectedTrip && (
+            <Modal animationType='slide' visible={showTripInfoModal} children={
               <>
                 <AppHeader title='Інформація' handleBackActionPress={closeInfoModal} />
-                <BusInfo busInfo={selectedBus} deleteHandler={handleDelete} />
+                <TripInfo tripInfo={selectedTrip} deleteHandler={handleDelete} />
               </>
             }/>
           )}
@@ -109,4 +111,4 @@ const Buses = () => {
   );
 }
 
-export default Buses;
+export default Trips;

@@ -67,12 +67,13 @@ const Workers = () => {
   const handleDelete = async () => {
     if (selectedWorker) {
       const response = await deleteWorker(selectedWorker.id);
+      setShowWorkerInfoModal(false);
       if (response.error) {
         callRepeatAlert(() => 
-        loadWorkersInRole(workersRole as Roles),
-        'Не вдалося завантижити дані',);
+        handleDelete(),
+        'Не вдалося видалити робітника',);
+        return;
       }
-      setShowWorkerInfoModal(false);
       if (workersRole) {
         await loadWorkersInRole(workersRole)
       }
@@ -89,7 +90,7 @@ const Workers = () => {
             <RNPickerSelect
               onValueChange={async (value: number) => await handleSelectPickerChange(value)}
               placeholder={{
-                label: 'Вииберіть роль...',
+                label: 'Виберіть роль...',
                 value: null,
               }}
               items={workersDropdownData}

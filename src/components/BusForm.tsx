@@ -1,22 +1,20 @@
-import React, { MutableRefObject, useEffect, useRef, useState } from 'react';
-import { Text, View, Image, Keyboard } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 import RNPickerSelect, { Item } from 'react-native-picker-select';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import DateTimePicker, { Event } from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { inputUnderlineColors, SelectPickerData, workersDropdownData } from '../lib/constants';
+import { inputUnderlineColors } from '../lib/constants';
 import appStyles from '../styles/appStyle';
 import registerStyles from '../styles/registerStyle';
 import { Formik } from 'formik';
-import { busSchema, busTypeSchema, registerSchema } from '../lib/validationShemas';
+import { busSchema } from '../lib/validationShemas';
 import FormErrorBox from './FormErrorBox';
-import { callRepeatAlert, formatDate, subtracDateYears } from '../lib/functions';
-import { addBus, addBusType, checkIfBusNumberIsUnique, getBusDriversWithoutBus, getBusTypes, login, register, registerWorker } from '../lib/api';
+import { callRepeatAlert } from '../lib/functions';
+import { addBus, checkIfBusNumberIsUnique, getBusDriversWithoutBus, getBusTypes } from '../lib/api';
 import LoadingScreen from './LoadingScreen';
 import selectPickerStyles from '../styles/selectPickerStyles';
-import Roles from '../lib/roles';
 
 interface IProps {
   createHandler?: () => Promise<void>;
@@ -36,6 +34,7 @@ const BusForm = (props: IProps) => {
     setIsLoading(true);
     const busDrivers = await getBusDriversWithoutBus();
     const busTypes = await getBusTypes();
+    console.log(busDrivers, busTypes)
     setIsLoading(false);
     if (!busDrivers) {
       setErrorText('Не знайдено жодного вільного водія');
@@ -49,13 +48,13 @@ const BusForm = (props: IProps) => {
       return {
         label: `${busDriver.firstName} ${busDriver.lastName}`,
         value: busDriver.id,
-      }
+      };
     }));
     setBusTypes(busTypes.map((busType) => {
       return {
         label: busType.name,
         value: busType.id,
-      }
+      };
     }));
   }
 
@@ -155,7 +154,7 @@ const BusForm = (props: IProps) => {
                 <RNPickerSelect
                   onValueChange={(value) => setSelectedBusTypeId(value)}
                   placeholder={{
-                    label: 'Вииберіть тип...',
+                    label: 'Виберіть тип...',
                     value: null,
                   }}
                   items={busTypes}
@@ -167,7 +166,7 @@ const BusForm = (props: IProps) => {
                 <RNPickerSelect
                   onValueChange={(value) => setSelectedBusDriverId(value)}
                   placeholder={{
-                    label: 'Вииберіть водія...',
+                    label: 'Виберіть водія...',
                     value: null,
                   }}
                   items={busDrivers}

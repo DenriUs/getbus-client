@@ -10,7 +10,7 @@ const axiosTimeoutSeconds = 20;
 export const jwtAsyncStorageKeyName = 'jwt';
 
 export const mainAxiosRequestConfig: AxiosRequestConfig = {
-  baseURL: 'https://c385d97a28c9.ngrok.io',
+  baseURL: 'https://e1c0897c9222.ngrok.io',
   timeout: axiosTimeoutSeconds * 1000,
 }
 
@@ -76,11 +76,29 @@ export const workersDropdownData = [
     label: 'Диспетчер',
     value: Roles.Dispatcher,
   },
-  {
-    label: 'Працівник служби підтримки',
-    value: Roles.SupportWorker,
-  },
 ]
 
-export type SelectPickerData = { label: string, value: any}[];
-
+export const ukraineCities = [
+  'Полтава',
+  'Київ',
+  'Харків',
+  'Чернігів',
+  'Суми',
+  'Черкаси',
+  'Кропивницький',
+  'Дніпро',
+  'Запоріжжя',
+  'Херсон',
+  'Житомир',
+  'Рівне',
+  'Луцьк',
+  'Львів',
+  'Ужгород',
+  'Івано-Франківськ',
+  'Хмельницький',
+  'Чернівці',
+  'Вінниця',
+  'Миколаїв',
+  'Одеса',
+  'Тернопіль',
+]

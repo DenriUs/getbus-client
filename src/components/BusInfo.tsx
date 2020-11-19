@@ -27,7 +27,7 @@ const BusInfo = (props: IProps) => {
             <Card.Title title='Назва' subtitle={busInfo.name} titleStyle={{color: '#000000'}}  subtitleStyle={{color: '#000000', fontSize: 16, fontFamily: 'sans-serif-light'}} />
           </Card>
           <Card style={{marginBottom: 15, padding: 5, borderColor: '#5ca6f7', borderWidth: 1}}>
-            <Card.Title title='Кількість міцсь' subtitle={busInfo.seatsAmount} titleStyle={{color: '#000000'}}  subtitleStyle={{color: '#000000', fontSize: 16, fontFamily: 'sans-serif-light'}} />
+            <Card.Title title='Кількість місць' subtitle={busInfo.seatsAmount} titleStyle={{color: '#000000'}}  subtitleStyle={{color: '#000000', fontSize: 16, fontFamily: 'sans-serif-light'}} />
           </Card>
           <Card style={{marginBottom: 15, padding: 5, borderColor: '#5ca6f7', borderWidth: 1}}>
             <Card.Title title='Номер' subtitle={busInfo.number} titleStyle={{color: '#000000'}}  subtitleStyle={{color: '#000000', fontSize: 16, fontFamily: 'sans-serif-light'}} />

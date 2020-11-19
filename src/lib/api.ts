@@ -1,9 +1,9 @@
-import Axios from 'axios';
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { AsyncStorage } from 'react-native';
 import { jwtAsyncStorageKeyName, mainAxiosRequestConfig } from './constants';
-import { IBus, IBusType, IUser, ServerResponse } from './entities';
+import { IBus, IBusType, ITicket, ITrip, IUser, ServerResponse } from './entities';
 import Roles from './roles';
+import { TripState } from './tripState';
 
 let axiosInstance: AxiosInstance;
 
@@ -16,9 +16,9 @@ export async function updateAxiosInstance() {
   });
 }
 
-async function sendGetRequest(endpoint: string): Promise<ServerResponse> {
+async function sendGetRequest(endpoint: string, data?: {}): Promise<ServerResponse> {
   try {
-    const response = await axiosInstance.get(endpoint);
+    const response = await axiosInstance.get(endpoint, { params: data });
     return { data: response.data };
   } catch (error) {
     return { error: error.response.data };
@@ -120,11 +120,11 @@ export async function getUsersInRole(role: Roles): Promise<IUser[] | undefined> 
 }
 
 export async function addBusType(name: string): Promise<ServerResponse> {
-  return sendPostRequest(`/busType/create`, { name });
+  return sendPostRequest('/busType/create', { name });
 }
 
 export async function getBusTypes(): Promise<IBusType[] | undefined> {
-  const response = await sendGetRequest(`/busType/getAll`);
+  const response = await sendGetRequest('/busType/getAll');
   if (response) {
     return response.data as IBusType[];
   }
@@ -141,18 +141,26 @@ export async function addBus(
   busTypeId: number,
   busDriverId: string,
 ): Promise<ServerResponse> {
-  return sendPostRequest(`/bus/create`, { name, seatsAmount, number, busTypeId, busDriverId });
+  return sendPostRequest('/bus/create', { name, seatsAmount, number, busTypeId, busDriverId });
 }
 
 export async function getBuses(): Promise<IBus[] | undefined> {
-  const response = await sendGetRequest(`/bus/getAll`);
+  const response = await sendGetRequest('/bus/getAll');
   if (response) {
     return response.data as IBus[];
   }
 }
 
+export async function getBusByDriverId(driverId: string): Promise<IBus | undefined> {
+  console.log('Id: ', driverId)
+  const response = await sendGetRequest(`/bus/getByDriverId/${driverId}`);
+  if (response) {
+    return response.data as IBus;
+  }
+}
+
 export async function checkIfBusNumberIsUnique(number: number): Promise<ServerResponse> {
-  return await sendGetRequest(`/bus/checkIfBusNumberIsUnique`);
+  return await sendGetRequest(`/bus/checkIfBusNumberIsUnique/${number}`);
 }
 
 export async function deleteBus(busTypeId: number): Promise<ServerResponse> {
@@ -160,8 +168,86 @@ export async function deleteBus(busTypeId: number): Promise<ServerResponse> {
 }
 
 export async function getBusDriversWithoutBus(): Promise<IUser[] | undefined> {
-  const response = await sendGetRequest(`/user/getBusDriversWithoutBus`);
+  const response = await sendGetRequest('/user/getBusDriversWithoutBus');
   if (response) {
     return response.data as IUser[];
+  }
+}
+
+export async function addTrip(
+  departureCity: string,
+  arrivalCity: string,
+  departureDateTime: Date,
+  arrivalDateTime: Date,
+  availableSeatsAmount: number,
+  seatPrice: number,
+  tripTime: string,
+  tripState: TripState,
+  busDriverId: string,
+): Promise<ServerResponse> {
+  return sendPostRequest('/trip/create', {
+    departureCity,
+    arrivalCity,
+    departureDateTime,
+    arrivalDateTime,
+    availableSeatsAmount,
+    seatPrice,
+    tripTime,
+    tripState,
+    busDriverId,
+  });
+}
+
+export async function getTrips(): Promise<ITrip[] | undefined> {
+  const response = await sendGetRequest('/trip/getAll');
+  if (response) {
+    return response.data as ITrip[];
+  }
+}
+
+export async function deleteTrip(tripId: number): Promise<ServerResponse> {
+  return sendPostRequest(`/trip/delete/${tripId}`);
+}
+
+export async function getInProgressTrips(): Promise<ITrip[] | undefined> {
+  const response = await sendGetRequest('/trip/getInProgressTrips');
+  if (response) {
+    return response.data as ITrip[];
+  }
+}
+
+export async function getBusDriversForTrip(): Promise<IUser[] | undefined> {
+  const response = await sendGetRequest('/user/getBusDriversForTrip');
+  if (response) {
+    return response.data as IUser[];
+  }
+}
+
+export async function searchTrips(
+  departureCity: string,
+  arrivalCity: string,
+  departureDateTime: Date
+): Promise<ITrip[] | undefined> {
+  const response = await sendGetRequest('/trip/searchTrips', {
+    departureCity,
+    arrivalCity,
+    departureDateTime,
+  });
+  if (response) {
+    return response.data as ITrip[];
+  }
+}
+
+export async function orderTicket(
+  price: number,
+  tripId: number,
+): Promise<ServerResponse> {
+  return sendPostRequest(`/ticket/create`, { price, tripId });
+}
+
+export async function getUserTickets(): Promise<ITicket[] | undefined> {
+  const response = await sendGetRequest('/ticket/get');
+  if (response) {
+    return response.data as ITicket[];
   }
 }

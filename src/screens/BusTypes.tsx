@@ -45,13 +45,14 @@ const BusTypes = () => {
   const handleDelete = async () => {
     if (selectedBusType) {
       const response = await deleteBusType(selectedBusType.id);
+      setShowBusTypeInfoModal(false);
       if (response.error) {
         callRepeatAlert(
           handleDelete,
           'Не вдалося видалити дані, перевірте чи не належить цей тип до якогось автобуса'
         );
+        return;
       }
-      setShowBusTypeInfoModal(false);
       await loadBusTypes();
     }
   }

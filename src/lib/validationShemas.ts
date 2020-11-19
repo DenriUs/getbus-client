@@ -64,3 +64,15 @@ export const busSchema = yup.object({
     .number()
     .required('Введіть номер автобуса'),
 });
+
+export const tripSchema = yup.object({
+  departureDateTime: yup
+    .string()
+    .required('Виберіть дату та час відправки'),
+  arrivalDateTime: yup
+    .string()
+    .required('Виберіть дату та час прибуття'),
+  seatPrice: yup
+    .number()
+    .required('Введіть ціна за місце')
+});
